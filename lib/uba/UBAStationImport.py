@@ -30,7 +30,7 @@ class UBAStationImport:
     def __init__(self, lib: ImportLib):
         self.__lib = lib
         since = self.__lib.get_config("since", "")
-        if len(since) == 0:
+        if len(since) > 1:
             since_date = date.today()
         else:
             since_date = date.fromisoformat(since)
