@@ -31,8 +31,13 @@ class UBAStationImport:
         self.__lib = lib
         since = self.__lib.get_config("since", "")
         if len(since) > 1:
-            since_date = date.today()
+            try:
+                since_date = date.today()
+            except ValueError:
+                logger.info("No config 'since' provided or invalid")
+                since_date = date.fromisoformat(since)
         else:
+            logger.info("No config 'since' provided or invalid")
             since_date = date.fromisoformat(since)
         logger.info("Loading metadata... This usually takes a few seconds...")
         self.__metadata = UBAMetadataManager(since_date)
