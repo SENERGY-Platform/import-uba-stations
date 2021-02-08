@@ -6,6 +6,7 @@ Allows you to import air quality measurements from UBA stations.
 * value (float): measurement value
 * unit (string): value unit
 * measurement (string): The air quality parameter that has been measurement (for example PM10)
+* measurement_pretty (string): human friendly version of measurement
 * meta (struct):
   * station_id (string): id of the station
   * station_name (string): name of the station
