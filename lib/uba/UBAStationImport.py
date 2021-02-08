@@ -29,12 +29,11 @@ slice_size = timedelta(days=30)
 class UBAStationImport:
     def __init__(self, lib: ImportLib):
         self.__lib = lib
-        since = self.__lib.get_config("since", "")
+        since = self.__lib.get_config("since", "").strip()
         if len(since) < 4:
             since_date = date.today()
             logger.info("No config 'since' provided or invalid")
         else:
-            logger.info("No config 'since' provided or invalid")
             try:
                 since_date = date.fromisoformat(since)
             except ValueError:
