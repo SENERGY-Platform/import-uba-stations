@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from datetime import date, timezone, datetime, timedelta
+from datetime import date, timezone, datetime, timedelta, time
 from typing import List, Tuple
 
 from import_lib.import_lib import get_logger, ImportLib
@@ -48,7 +48,7 @@ class UBAStationImport:
                                                      self.__lib.get_config("FilterStates", []))
         logger.info('Selected ' + str(len(self.__req_stations)) + ' stations')
         self.__filter_measurements = self.__lib.get_config("FilterMeasurements", None)
-        self.__last_run: datetime = datetime.combine(since_date, datetime.min.time(), tzinfo=timezone.utc)
+        self.__last_run: datetime = datetime.combine(since_date, time(hour=1), tzinfo=timezone.utc)
         previous_points = self.__lib.get_last_n_messages(len(self.__req_stations))
         if previous_points is not None:
             previous_points = previous_points[::-1]  # reverse list, newest msgs have lowest index
