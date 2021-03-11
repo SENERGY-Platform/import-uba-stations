@@ -1,4 +1,4 @@
-git+https://github.com/SENERGY-Platform/import-lib.git@68b6fcaa8c79ac9e87e470fb0ebf4bd886e75f5b
+git+https://github.com/SENERGY-Platform/import-lib.git@d3e20f2d6e4fd94c4372ff9f51c4ce0e3b5a856f
 schedule
 requests
 rfc3339
