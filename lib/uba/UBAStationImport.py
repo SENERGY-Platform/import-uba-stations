@@ -47,7 +47,6 @@ class UBAStationImport:
                                                      self.__lib.get_config("FilterStationIds", []),
                                                      self.__lib.get_config("FilterStates", []))
         logger.info('Selected ' + str(len(self.__req_stations)) + ' stations')
-        self.__filter_measurements = self.__lib.get_config("FilterMeasurements", None)
         self.__last_run: datetime = datetime.combine(since_date, time(hour=1), tzinfo=timezone.utc)
         previous_points = self.__lib.get_last_n_messages(len(self.__req_stations))
         if previous_points is not None:
@@ -77,7 +76,7 @@ class UBAStationImport:
         values: List[Tuple[datetime, Value]] = []
 
         for station in self.__req_stations:
-            values.extend(self.__fetcher.get_data(station, start, end, self.__filter_measurements))
+            values.extend(self.__fetcher.get_data(station, start, end))
 
         values.sort(key=lambda v: v[0])
         for time, value in values:

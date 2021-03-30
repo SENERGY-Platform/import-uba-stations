@@ -11,6 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from typing import Tuple, List
 
 from lib.uba.meta.UBAComponent import UBAComponent
 from lib.uba.meta.UBAStation import UBAStation
@@ -21,17 +22,20 @@ class Value(object):
     Class to store value
     '''
 
-    def __init__(self, value: float, component: UBAComponent, station: UBAStation):
-        self.value = value
-        self.component = component
+    def __init__(self, measurements: List[Tuple[float, UBAComponent]], station: UBAStation):
+        self.measurements = measurements
         self.station = station
 
     def dict(self) -> dict:
+        measurements = {}
+        for v in self.measurements:
+            measurements[v[1].short_name] = {
+                v[1].short_name + "_value": v[0],
+                v[1].short_name + "_unit": v[1].unit,
+                v[1].short_name + "_measurement_pretty": v[1].pretty_name
+            }
         d = {
-            "value": self.value,
-            "unit": self.component.unit,
-            "measurement": self.component.short_name,
-            "measurement_pretty": self.component.pretty_name,
+            "measurements": measurements,
             "meta": {
                 "station_id": self.station.id,
                 "station_name": self.station.name,

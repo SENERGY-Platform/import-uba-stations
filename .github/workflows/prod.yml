@@ -35,5 +35,5 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            smartenergyplatform/import-uba-stations:prod
-            ghcr.io/senergy-platform/import-uba-stations:prod
+            smartenergyplatform/import-uba-stations:prod-v2
+            ghcr.io/senergy-platform/import-uba-stations:prod-v2

@@ -13,13 +13,14 @@
 #  limitations under the License.
 
 from datetime import date, datetime, timedelta
-from typing import Tuple, List, Optional
+from typing import Tuple, List
 
 import requests
 from import_lib.import_lib import get_logger
 from pytz import timezone
 
 from lib.uba.data.Value import Value
+from lib.uba.meta.UBAComponent import UBAComponent
 from lib.uba.meta.UBAMetadataManager import UBAMetadataManager
 from lib.uba.meta.UBAStation import UBAStation
 
@@ -33,8 +34,7 @@ class UBADataFetcher:
         self.__metadata = metadata
         self.__zone = timezone('Europe/Berlin')
 
-    def get_data(self, station: UBAStation, dt_from: datetime, dt_to: datetime,
-                 filter_measurements: Optional[List[str]]) -> List[Tuple[datetime, Value]]:
+    def get_data(self, station: UBAStation, dt_from: datetime, dt_to: datetime) -> List[Tuple[datetime, Value]]:
         url = UBA_DATA_URL + "?station=" + station.id + "&date_from=" + dt_from.date().isoformat() + "&date_to=" + dt_to.date().isoformat() + "&time_from=" + str(
             dt_from.time().hour) + "&time_to=" + str(dt_to.time().hour)
         logger.debug("Fetching: " + url)
@@ -52,10 +52,10 @@ class UBADataFetcher:
                 measurement[0] = measurement[0][:11] + '23:59:59'
             t = self.__zone.localize(datetime.fromisoformat(measurement[0]))
             points = measurement[3:]
+            values: List[Tuple[float, UBAComponent]] = []
             for point in points:
-                component = self.__metadata.get_component(str(point[0]))
-                if filter_measurements is None or component.short_name in filter_measurements:
-                    time_values.append((t, Value(point[1], component, station)))
+                values.append((point[1], self.__metadata.get_component(str(point[0]))))
+            time_values.append((t, Value(values, station)))
         return time_values
 
 
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     manager = UBAMetadataManager(date.today())
     fetcher = UBADataFetcher(manager)
     now_sub2h = datetime.now() - timedelta(hours=2)
-    values = fetcher.get_data("215", now_sub2h, datetime.now())
+    values = fetcher.get_data(manager.get_station("215"), now_sub2h, datetime.now())
     import json
 
     for time, value in values:
