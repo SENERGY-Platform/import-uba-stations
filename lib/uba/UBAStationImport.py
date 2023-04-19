@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from datetime import date, timezone, datetime, timedelta, time
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from import_lib.import_lib import get_logger, ImportLib
 
@@ -46,37 +46,46 @@ class UBAStationImport:
                                                      self.__lib.get_config("FilterCities", []),
                                                      self.__lib.get_config("FilterStationIds", []),
                                                      self.__lib.get_config("FilterStates", []))
+
         logger.info('Selected ' + str(len(self.__req_stations)) + ' stations')
-        self.__last_run: datetime = datetime.combine(since_date, time(hour=1), tzinfo=timezone.utc)
-        previous_points = self.__lib.get_last_n_messages(len(self.__req_stations))
+        earliest: datetime = datetime.combine(since_date, time(hour=1), tzinfo=timezone.utc)
+        self.__station_latest: Dict[str, datetime] = {}
+        found_latest: Dict[str, bool] = {}
+        for station in self.__req_stations:
+            self.__station_latest[station.id] = earliest
+            found_latest[station.id] = False
+        previous_points = self.__lib.get_last_n_messages(
+            len(self.__req_stations) * 100)  # need at least one per station
         if previous_points is not None:
-            previous_points = previous_points[::-1]  # reverse list, newest msgs have lowest index
-            if len(previous_points) > 0:
-                self.__last_run = previous_points[0][0].astimezone(timezone.utc)
+            previous_points = previous_points[::-1]  # reverse list, newest msgs have the lowest index now
+            for point in previous_points:
+                if not found_latest[point[1]["meta"]["station_id"]]:
+                    self.__station_latest[point[1]["meta"]["station_id"]] = (point[0].replace(tzinfo=timezone.utc) + timedelta(hours=1))
+                    found_latest[point[1]["meta"]["station_id"]] = True
 
     def import_since_last_run(self):
-        self.import_since(self.__last_run)
-
-    def import_since(self, start: datetime):
         now = datetime.now(timezone.utc)
+        start = min(self.__station_latest.values())
         next_end = start + slice_size
         count = 0
-        count += self.__import_slice(start, next_end)
+        count += self.__import_slice(next_end)
         logger.info("Got " + str(count) + " new values")
         while now > next_end:
             start = next_end  # works in python by value
             next_end = start + slice_size
-            new_values = self.__import_slice(start, next_end)
+            new_values = self.__import_slice(next_end)
             logger.info("Got " + str(new_values) + " new values")
             count += new_values
-        if count > 0:
-            self.__last_run = now
 
-    def __import_slice(self, start: datetime, end: datetime) -> int:
+    def __import_slice(self, end: datetime) -> int:
         values: List[Tuple[datetime, Value]] = []
 
         for station in self.__req_stations:
-            values.extend(self.__fetcher.get_data(station, start, end))
+            station_data = self.__fetcher.get_data(station, self.__station_latest[station.id], end)
+            if len(station_data) > 0:
+                self.__station_latest[station.id] = (
+                            station_data[len(station_data) - 1][0] + timedelta(hours=1)).astimezone(timezone.utc)
+            values.extend(station_data)
 
         values.sort(key=lambda v: v[0])
         for time, value in values:

@@ -1,5 +1,5 @@
-FROM python:3.7-alpine
-RUN apk add git gcc librdkafka-dev musl-dev --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+FROM python:3-slim-buster
+RUN apt-get update && apt-get install git -y
 
 ADD . /opt/app
 WORKDIR /opt/app

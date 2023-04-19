@@ -13,6 +13,7 @@
 #  limitations under the License.
 
 from datetime import date, datetime, timedelta
+from dateutil import tz
 from typing import Tuple, List
 
 import requests
@@ -35,8 +36,10 @@ class UBADataFetcher:
         self.__zone = timezone('Europe/Berlin')
 
     def get_data(self, station: UBAStation, dt_from: datetime, dt_to: datetime) -> List[Tuple[datetime, Value]]:
-        url = UBA_DATA_URL + "?station=" + station.id + "&date_from=" + dt_from.date().isoformat() + "&date_to=" + dt_to.date().isoformat() + "&time_from=" + str(
-            dt_from.time().hour) + "&time_to=" + str(dt_to.time().hour)
+        dt_from_local = dt_from.astimezone(tz.gettz('Europe/Berlin'))
+        dt_to_local = dt_to.astimezone(tz.gettz('Europe/Berlin'))
+        url = UBA_DATA_URL + "?station=" + station.id + "&date_from=" + dt_from_local.date().isoformat() + "&date_to=" + dt_to_local.date().isoformat() + "&time_from=" + str(
+            dt_from_local.time().hour) + "&time_to=" + str(dt_to_local.time().hour)
         logger.debug("Fetching: " + url)
         r = requests.get(url)
         if not r.ok:
@@ -51,6 +54,9 @@ class UBADataFetcher:
             if measurement[0].endswith('24:00:00'):
                 measurement[0] = measurement[0][:11] + '23:59:59'
             t = self.__zone.localize(datetime.fromisoformat(measurement[0]))
+            incomplete = measurement[2] == 1
+            if incomplete:
+                break
             points = measurement[3:]
             values: List[Tuple[float, UBAComponent]] = []
             for point in points:
