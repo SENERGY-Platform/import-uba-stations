@@ -29,6 +29,7 @@ slice_size = timedelta(days=30)
 class UBAStationImport:
     def __init__(self, lib: ImportLib):
         self.__lib = lib
+        self.__allow_incomplete_after_hours = timedelta(hours=self.__lib.get_config("AllowIncompleteAfterHours", 96))
         since = self.__lib.get_config("since", "").strip()
         if len(since) < 4:
             since_date = date.today()
@@ -81,7 +82,7 @@ class UBAStationImport:
         values: List[Tuple[datetime, Value]] = []
 
         for station in self.__req_stations:
-            station_data = self.__fetcher.get_data(station, self.__station_latest[station.id], end)
+            station_data = self.__fetcher.get_data(station, self.__station_latest[station.id], end, self.__allow_incomplete_after_hours)
             if len(station_data) > 0:
                 self.__station_latest[station.id] = (
                             station_data[len(station_data) - 1][0] + timedelta(hours=1)).astimezone(timezone.utc)

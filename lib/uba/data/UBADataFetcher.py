@@ -13,6 +13,7 @@
 #  limitations under the License.
 
 from datetime import date, datetime, timedelta
+from datetime import timezone as dttz
 from dateutil import tz
 from typing import Tuple, List
 
@@ -35,7 +36,7 @@ class UBADataFetcher:
         self.__metadata = metadata
         self.__zone = timezone('Europe/Berlin')
 
-    def get_data(self, station: UBAStation, dt_from: datetime, dt_to: datetime) -> List[Tuple[datetime, Value]]:
+    def get_data(self, station: UBAStation, dt_from: datetime, dt_to: datetime, ignore_incomplete_after: timedelta) -> List[Tuple[datetime, Value]]:
         dt_from_local = dt_from.astimezone(tz.gettz('Europe/Berlin'))
         dt_to_local = dt_to.astimezone(tz.gettz('Europe/Berlin'))
         url = UBA_DATA_URL + "?station=" + station.id + "&date_from=" + dt_from_local.date().isoformat() + "&date_to=" + dt_to_local.date().isoformat() + "&time_from=" + str(
@@ -53,9 +54,9 @@ class UBADataFetcher:
             # measurement[0] can be sth like '2020-12-01 24:00:00'
             if measurement[0].endswith('24:00:00'):
                 measurement[0] = measurement[0][:11] + '23:59:59'
-            t = self.__zone.localize(datetime.fromisoformat(measurement[0]))
+            t: datetime = self.__zone.localize(datetime.fromisoformat(measurement[0]))
             incomplete = measurement[2] == 1
-            if incomplete:
+            if incomplete and (t + ignore_incomplete_after).astimezone(dttz.utc) < datetime.utcnow().replace(tzinfo=dttz.utc):
                 break
             points = measurement[3:]
             values: List[Tuple[float, UBAComponent]] = []
@@ -68,8 +69,8 @@ class UBADataFetcher:
 if __name__ == "__main__":
     manager = UBAMetadataManager(date.today())
     fetcher = UBADataFetcher(manager)
-    now_sub2h = datetime.now() - timedelta(hours=2)
-    values = fetcher.get_data(manager.get_station("215"), now_sub2h, datetime.now())
+    now_sub172h = datetime.now() - timedelta(hours=172)
+    values = fetcher.get_data(manager.get_station("215"), now_sub172h, datetime.now(), timedelta(hours=96))
     import json
 
     for time, value in values:

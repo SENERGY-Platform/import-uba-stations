@@ -29,6 +29,10 @@ If a station matches at least one filter criteria, it will be imported. If no fi
 You can choose if you want to import historical data:
   * since (string): Date string in the format YYYY-MM-DD (for example 2020-12-05). Defaults to the current day.
 
+Since data from the API is typically incomplete for recent timestamps, the import will ignore incomplete data.
+After the configured amount of hours it will no longer assume incomplete data will be added and import the incomplete data.
+  * AllowIncompleteAfterHours (int): The amount of hours after the import will no longer assume incomplete data will be added.
+
 ---
 
 This tool uses publicly available data provided by the German Umweltbundesamt. View the original data [on their website](https://www.umweltbundesamt.de/daten/luft/luftdaten/stationen).
