@@ -57,6 +57,7 @@ class UBADataFetcher:
             t: datetime = self.__zone.localize(datetime.fromisoformat(measurement[0]))
             incomplete = measurement[2] == 1
             if incomplete and (t + ignore_incomplete_after).astimezone(dttz.utc) < datetime.utcnow().replace(tzinfo=dttz.utc):
+                logger.info(f"Ignoring {len(measurements) - len(time_values)} of station {station.name} ({station.id}) since value from {t.isoformat()} is incomplete")
                 break
             points = measurement[3:]
             values: List[Tuple[float, UBAComponent]] = []
